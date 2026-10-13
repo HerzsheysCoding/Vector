@@ -1,0 +1,16 @@
+{
+  "name": "gridtriage-nebius-hackathon",
+  "version": "1.0.0",
+  "description": "Edge-Resilient Environmental Triage Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "@tavily/core": "^0.0.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "openai": "^4.47.1"
+  }
+}
