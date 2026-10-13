@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nebius Environmental Grid</title>
+  <link rel="stylesheet" href="assets/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-black border-bottom border-secondary mb-3">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1 text-success">⬢ GridTriage Platform</span>
+      <span class="badge bg-secondary">Nemotron-3-Ultra Active</span>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-4">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="card bg-dark border-secondary h-100">
+          <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span>Data Ingestion</span>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="inputToggle">
+              <label class="form-check-label text-muted small" id="toggleLabel">Human UI</label>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="humanForm">
+              <input type="text" class="form-control mb-2 bg-dark text-white border-secondary" id="latlng" value="14.3294, 120.9367">
+              <textarea class="form-control mb-3 bg-dark text-white border-secondary" id="desc" rows="4" placeholder="Report details..."></textarea>
+            </div>
+            <div id="iotForm" class="d-none">
+              <pre class="bg-black text-success p-2 rounded small" id="iotPayload"></pre>
+              <button class="btn btn-outline-secondary btn-sm mb-3 w-100" id="genIoT">Generate Edge Telemetry</button>
+            </div>
+            <button class="btn btn-success w-100" id="submitBtn">Transmit to Nebius Cloud</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card border-secondary h-100">
+          <div id="map" style="height: 600px; border-radius: 4px;"></div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="card bg-dark border-secondary mb-3">
+          <div class="card-header border-secondary text-warning">Agentic Reasoning Terminal</div>
+          <div class="card-body bg-black p-0">
+            <div id="terminal" class="p-3 text-monospace small text-white" style="height: 250px; overflow-y: auto; font-family: monospace;">
+              > System standing by...
+            </div>
+          </div>
+        </div>
+        <div id="feed" class="d-flex flex-column gap-2" style="height: 330px; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
