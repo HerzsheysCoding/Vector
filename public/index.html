@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+<<<<<<< HEAD
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GridTriage Platform - Autonomous Incident Command</title>
@@ -553,3 +554,445 @@
   </script>
 </body>
 </html> (where do i add this ui/ux design
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vector Platform - Autonomous Incident Command</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            tactical: {
+              bg: '#090D16',
+              panel: '#111827',
+              border: '#1F2937',
+              nvidia: '#76B900',
+              nebius: '#38BDF8',
+              alert: '#EF4444',
+              warn: '#F59E0B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #090D16; color: #F3F4F6; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #090D16; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+
+    .pulse-epicenter {
+      background: rgba(239, 68, 68, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
+      animation: pulse-red 1.75s infinite cubic-bezier(0.66, 0, 0, 1);
+    }
+    @keyframes pulse-red {
+      to { box-shadow: 0 0 0 28px rgba(239, 68, 68, 0); }
+    }
+    .leaflet-container { background: #090D16 !important; }
+
+    .leaflet-popup-content-wrapper {
+      background: #0B111E !important;
+      color: #F3F4F6 !important;
+      border: 1px solid #1F2937;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.75) !important;
+    }
+    .leaflet-popup-tip {
+      background: #0B111E !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen lg:h-screen flex flex-col select-none overflow-y-auto lg:overflow-hidden">
+
+  <header class="min-h-[3.5rem] py-2 border-b border-gray-800 bg-[#0B111E] px-4 flex flex-wrap items-center justify-between gap-2 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="relative flex items-center justify-center w-3 h-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      </div>
+      <span class="font-bold tracking-tight text-base text-white">Vector <span class="text-emerald-400 font-mono text-xs uppercase px-1.5 py-0.5 bg-emerald-950/80 border border-emerald-800 rounded ml-1">v2.5 Tactical</span></span>
+      <span class="text-gray-600 hidden md:inline">|</span>
+      <span class="text-xs text-gray-400 hidden md:inline">Autonomous Multi-Agent Incident Command</span>
+    </div>
+
+    <div class="flex items-center gap-2.5 font-mono text-xs">
+      <div class="flex items-center gap-2 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
+        <span class="text-gray-400">Edge Failover:</span>
+        <button id="offline-toggle-btn" onclick="toggleOfflineMode()" class="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-800 text-gray-400 border border-gray-700 transition">
+          OFFLINE: OFF
+        </button>
+      </div>
+
+      <div class="hidden xl:flex items-center gap-2 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
+        <i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i>
+        <span class="text-gray-400">Throughput:</span>
+        <span id="metric-speed" class="text-sky-400 font-semibold">148.4 tok/s</span>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-1.5 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
+        <i data-lucide="globe" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span class="text-gray-400">Tavily:</span>
+        <span id="tavily-status-badge" class="text-amber-400 font-semibold">Live Grounded</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 grid grid-cols-12 gap-3 p-3 lg:overflow-hidden">
+
+    <section class="col-span-12 lg:col-span-3 bg-[#111827] border border-gray-800 rounded-lg flex flex-col lg:overflow-hidden">
+      <div class="p-3 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">
+        <div class="flex items-center gap-2">
+          <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+          <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-200">Data Ingestion</h2>
+        </div>
+      </div>
+
+      <div class="p-3.5 flex-1 flex flex-col gap-3.5 lg:overflow-y-auto">
+        <div>
+          <label class="text-[11px] font-mono uppercase text-gray-400 block mb-1.5">Multi-Scenario Test Suite</label>
+          <div class="grid grid-cols-3 gap-1 font-mono text-[10px]">
+            <button onclick="loadScenario('dasmarinas')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 border border-emerald-500/40 rounded text-emerald-300 truncate">
+              Brush Fire
+            </button>
+            <button onclick="loadScenario('substation')" class="px-2 py-1 bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded text-gray-300 truncate">
+              Grid Arc
+            </button>
+            <button onclick="loadScenario('flood')" class="px-2 py-1 bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded text-gray-300 truncate">
+              Flood Surge
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[11px] font-mono uppercase text-gray-400">Target Coordinates (LAT, LON)</label>
+            <span id="coord-location-tag" class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/60">Cavite Sector</span>
+          </div>
+          <div class="relative">
+            <input id="input-coords" type="text" value="14.3294, 120.9367" 
+              class="w-full bg-gray-950 border border-gray-700 focus:border-emerald-500 rounded-md px-3 py-2 text-xs font-mono text-white outline-none transition" />
+            <i data-lucide="crosshair" title="Detect GPS" class="w-3.5 h-3.5 text-gray-400 hover:text-emerald-400 absolute right-3 top-2.5 cursor-pointer transition"></i>
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col min-h-[110px]">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[11px] font-mono uppercase text-gray-400">Unstructured Field Report</label>
+            <span id="stream-badge" class="text-[10px] font-mono text-gray-500">NLP Parser Ready</span>
+          </div>
+          <textarea id="input-report" rows="4"
+            class="w-full flex-1 bg-gray-950 border border-gray-700 focus:border-emerald-500 rounded-md p-2.5 text-xs text-gray-200 leading-relaxed outline-none resize-none font-sans">Thick black smoke and a rapidly spreading brush fire spotted near the tree line. Winds are pushing it toward main roads.</textarea>
+        </div>
+
+        <button id="btn-transmit" onclick="runTriageSimulation()" 
+          class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-wider rounded-md shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition cursor-pointer">
+          <i data-lucide="zap" class="w-4 h-4"></i>
+          <span>Execute Multi-Agent Triage</span>
+        </button>
+
+        <div class="pt-2 border-t border-gray-800/80">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-mono uppercase text-gray-400">Live Environmental Telemetry</span>
+            <span id="telemetry-source-tag" class="text-[10px] font-mono text-sky-400">Tavily Grounded</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2 font-mono">
+            <div class="bg-gray-950/80 border border-gray-800/90 p-2.5 rounded-md col-span-2">
+              <div class="text-[10px] text-gray-400 flex items-center justify-between mb-1">
+                <span>WEATHER & CLIMATE RAG</span>
+                <i data-lucide="wind" class="w-3 h-3 text-amber-400"></i>
+              </div>
+              <div id="env-rag-text" class="text-[11px] text-gray-300 leading-tight">Synced with real-time climate search index.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="col-span-12 lg:col-span-5 bg-[#111827] border border-gray-800 rounded-lg flex flex-col overflow-hidden relative min-h-[420px] lg:min-h-0">
+      <div id="map" class="flex-1 w-full z-10 min-h-[360px]"></div>
+      <div class="min-h-[2.5rem] py-1.5 bg-gray-950 border-t border-gray-800 px-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-gray-400 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
+          <span>Epicenter Lock</span>
+        </div>
+        <div class="text-emerald-400">Click map to relocate incident zone</div>
+      </div>
+    </section>
+
+    <section class="col-span-12 lg:col-span-4 flex flex-col gap-3 lg:overflow-hidden">
+      <div class="h-64 lg:h-[44%] bg-[#0B0F17] border border-gray-800 rounded-lg flex flex-col overflow-hidden">
+        <div class="px-3.5 py-2.5 border-b border-gray-800 bg-gray-900/60 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs font-mono font-semibold text-amber-400 uppercase tracking-wider">Agentic Reasoning Terminal</span>
+          </div>
+          <button onclick="toggleJsonView()" id="btn-json-toggle" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+            { } Raw JSON
+          </button>
+        </div>
+
+        <div id="terminal-steps" class="p-3 font-mono text-xs space-y-2 overflow-y-auto flex-1">
+          <div class="p-2 rounded bg-gray-900/70 border border-gray-800/80">
+            <div class="text-amber-300 font-medium">Pipeline Status</div>
+            <div id="terminal-status-text" class="text-[11px] text-gray-400">Awaiting execution signal...</div>
+          </div>
+        </div>
+
+        <pre id="terminal-json" class="hidden p-3 font-mono text-[11px] text-sky-300 bg-gray-950 overflow-y-auto flex-1">{
+  "status": "READY"
+}</pre>
+      </div>
+
+      <div class="flex-1 bg-[#111827] border-2 border-red-500/80 rounded-lg flex flex-col overflow-hidden shadow-lg shadow-red-950/20">
+        <div class="p-3 bg-gradient-to-r from-red-950/90 via-red-900/40 to-gray-900 border-b border-red-500/40 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span id="badge-severity" class="px-2 py-0.5 bg-red-600 text-white font-mono font-bold text-xs rounded uppercase tracking-wider animate-pulse">
+              SEV: 8 / 10
+            </span>
+            <h3 id="triage-title" class="font-bold text-sm text-white tracking-tight">Active Incident Triage</h3>
+          </div>
+          <span id="badge-confidence" class="text-[11px] font-mono text-red-300">Confidence: 96%</span>
+        </div>
+
+        <div class="p-3.5 overflow-y-auto flex-1 space-y-3">
+          <p id="triage-summary" class="text-xs text-gray-300 leading-relaxed bg-gray-950/70 p-2.5 rounded border border-gray-800">
+            Execute execution pipeline to synthesize live environmental data and generate structured emergency response protocols.
+          </p>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-mono uppercase font-semibold text-sky-400">Actionable Response Protocols</span>
+              <span class="text-[10px] font-mono text-gray-400">Human-in-the-Loop Review</span>
+            </div>
+
+            <div id="protocols-container" class="space-y-1.5 text-xs">
+              <div class="p-2 rounded bg-gray-900/90 border border-gray-800 text-gray-400 text-xs">
+                Pending triage execution...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-2.5 bg-gray-950 border-t border-gray-800 flex items-center justify-between gap-2">
+          <div class="text-[11px] font-mono text-gray-400">
+            <span id="dispatch-status" class="text-emerald-400 font-semibold">Pending Review</span>
+          </div>
+          <button onclick="executeDispatch()" id="btn-dispatch" class="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-gray-950 font-mono font-bold text-xs rounded transition flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span>AUTHORIZE & DISPATCH</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    let isOfflineMode = false;
+    function toggleOfflineMode() {
+      isOfflineMode = !isOfflineMode;
+      const btn = document.getElementById('offline-toggle-btn');
+      const tavilyTag = document.getElementById('tavily-status-badge');
+      if (isOfflineMode) {
+        btn.className = "px-2 py-0.5 rounded text-[11px] font-bold bg-red-950 text-red-400 border border-red-700 transition";
+        btn.innerText = "OFFLINE: ON (EDGE FAILOVER)";
+        tavilyTag.innerText = "Bypassed (Edge Cache)";
+        tavilyTag.className = "text-red-400 font-semibold";
+      } else {
+        btn.className = "px-2 py-0.5 rounded text-[11px] font-bold bg-gray-800 text-gray-400 border border-gray-700 transition";
+        btn.innerText = "OFFLINE: OFF";
+        tavilyTag.innerText = "Live Grounded";
+        tavilyTag.className = "text-amber-400 font-semibold";
+      }
+    }
+
+    const map = L.map('map', { zoomControl: true }).setView([14.3294, 120.9367], 14);
+
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri - Source: Esri, USGS, NOAA'
+    }).addTo(map);
+
+    const pulseIcon = L.divIcon({
+      className: 'pulse-epicenter',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+
+    let epicenterMarker = L.marker([14.3294, 120.9367], { icon: pulseIcon }).addTo(map)
+      .bindPopup('<div class="font-mono text-xs"><b class="text-red-400">ACTIVE INCIDENT LOCK</b></div>');
+
+    let evacCircle = L.circle([14.3294, 120.9367], {
+      color: '#EF4444',
+      weight: 1.5,
+      dashArray: '6, 6',
+      fillColor: '#EF4444',
+      fillOpacity: 0.12,
+      radius: 650
+    }).addTo(map);
+
+    async function updateLocationLabel(lat, lng) {
+      const locTag = document.getElementById('coord-location-tag');
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
+        const data = await res.json();
+        if (data && data.address) {
+          const city = data.address.city || data.address.town || data.address.municipality || data.address.county || 'Active Sector';
+          const state = data.address.state || data.address.country || '';
+          locTag.innerText = `${city}${state ? ' / ' + state : ''}`;
+        }
+      } catch (e) {
+        locTag.innerText = `Live GPS Sector`;
+      }
+    }
+
+    function updateMapLocation(lat, lng) {
+      document.getElementById('input-coords').value = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
+      map.flyTo([lat, lng], 14, { duration: 1.2 });
+      epicenterMarker.setLatLng([lat, lng]);
+      evacCircle.setLatLng([lat, lng]);
+    }
+
+    function detectUserLocation() {
+      if ("geolocation" in navigator) {
+        const locTag = document.getElementById('coord-location-tag');
+        locTag.innerText = "Acquiring GPS Lock...";
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+            updateMapLocation(userLat, userLng);
+            updateLocationLabel(userLat, userLng);
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 6000 }
+        );
+      }
+    }
+
+    map.on('click', function(e) {
+      const clickedLat = e.latlng.lat;
+      const clickedLng = e.latlng.lng;
+      updateMapLocation(clickedLat, clickedLng);
+      updateLocationLabel(clickedLat, clickedLng);
+    });
+
+    const crosshairIcon = document.querySelector('[data-lucide="crosshair"]');
+    if (crosshairIcon) {
+      crosshairIcon.addEventListener('click', detectUserLocation);
+    }
+
+    detectUserLocation();
+
+    function loadScenario(type) {
+      const reportInput = document.getElementById('input-report');
+      const coordTag = document.getElementById('coord-location-tag');
+      
+      if (type === 'dasmarinas') {
+        coordTag.innerText = "Cavite Sector";
+        reportInput.value = "Thick black smoke and a rapidly spreading brush fire spotted near the Dasmarinas tree line. Winds are pushing it toward main roads.";
+        updateMapLocation(14.3294, 120.9367);
+      } else if (type === 'substation') {
+        coordTag.innerText = "Manila Grid Sector";
+        reportInput.value = "High-voltage transformer explosion and sustained arc flash at central substation. Smoke plume rising near rail corridor.";
+        updateMapLocation(14.5995, 120.9842);
+      } else if (type === 'flood') {
+        coordTag.innerText = "Coastal Sector";
+        reportInput.value = "Rapid flash flooding reported along river basin. Water levels rising 2 meters per hour, trapping residential pockets.";
+        updateMapLocation(14.4081, 120.9639);
+      }
+    }
+
+    async function runTriageSimulation() {
+      const btn = document.getElementById('btn-transmit');
+      const rawCoords = document.getElementById('input-coords').value.split(',');
+      const lat = parseFloat(rawCoords[0].trim()) || 14.3294;
+      const lng = parseFloat(rawCoords[1].trim()) || 120.9367;
+      const report = document.getElementById('input-report').value;
+
+      btn.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></span><span>Executing Pipeline...</span>`;
+      btn.classList.add('opacity-80');
+
+      try {
+        const response = await fetch('/api/triage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ report, lat, lng, offlineMode: isOfflineMode })
+        });
+        const jsonRes = await response.json();
+        const result = jsonRes.data;
+
+        document.getElementById('badge-severity').innerText = `SEV: ${result.severity_score} / 10`;
+        document.getElementById('triage-title').innerText = result.incident_classification.replace(/_/g, ' ');
+        document.getElementById('triage-summary').innerText = `Evaluated via ${result.engine || 'Nebius Token Factory'}. Confidence: ${(result.confidence * 100).toFixed(1)}%.`;
+        
+        if (result.metrics) {
+          document.getElementById('metric-speed').innerText = `${result.metrics.throughput_tok_sec} tok/s`;
+          document.getElementById('terminal-status-text').innerText = `Parser: ${result.metrics.parser_latency_ms}ms | Eval: ${result.metrics.eval_latency_ms}ms | Total: ${result.metrics.total_latency_ms}ms`;
+        }
+
+        if (result.telemetry_fusion && result.telemetry_fusion.weather) {
+          document.getElementById('env-rag-text').innerText = result.telemetry_fusion.weather;
+        }
+
+        const container = document.getElementById('protocols-container');
+        container.innerHTML = '';
+        (result.action_plan || []).forEach((step) => {
+          const div = document.createElement('div');
+          div.className = "p-2 rounded bg-gray-900/90 border border-gray-800 text-xs text-white";
+          div.textContent = step;
+          container.appendChild(div);
+        });
+
+        document.getElementById('terminal-json').textContent = JSON.stringify(result, null, 2);
+      } catch (e) {
+        alert("Pipeline connection error. Check server status.");
+      }
+
+      btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Execute Multi-Agent Triage</span>`;
+      btn.classList.remove('opacity-80');
+      lucide.createIcons();
+    }
+
+    function toggleJsonView() {
+      const steps = document.getElementById('terminal-steps');
+      const json = document.getElementById('terminal-json');
+      const btn = document.getElementById('btn-json-toggle');
+      if (json.classList.contains('hidden')) {
+        steps.classList.add('hidden');
+        json.classList.remove('hidden');
+        btn.innerText = "Agent Trace";
+      } else {
+        json.classList.add('hidden');
+        steps.classList.remove('hidden');
+        btn.innerText = "{ } Raw JSON";
+      }
+    }
+
+    function executeDispatch() {
+      const btn = document.getElementById('btn-dispatch');
+      btn.textContent = "PROTOCOLS AUTHORIZED & LOGGED";
+      btn.className = "px-3.5 py-1.5 bg-emerald-500 text-gray-950 font-mono font-bold text-xs rounded transition flex items-center gap-1.5";
+    }
+  </script>
+</body>
+</html>
+>>>>>>> 9d2c198 (Update project)
