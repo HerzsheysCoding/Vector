@@ -1,298 +1,19 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vector Platform - Autonomous Incident Command</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            tactical: { bg: '#090D16', panel: '#111827', border: '#1F2937' }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    body { background-color: #090D16; color: #F3F4F6; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #090D16; }
-    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-    .pulse-epicenter {
-      background: rgba(239, 68, 68, 0.9);
-      border-radius: 50%;
-      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
-      animation: pulse-red 1.75s infinite cubic-bezier(0.66, 0, 0, 1);
-    }
-    @keyframes pulse-red { to { box-shadow: 0 0 0 28px rgba(239, 68, 68, 0); } }
-    .leaflet-container { background: #090D16 !important; }
-  </style>
-</head>
-<body class="min-h-screen lg:h-screen flex flex-col select-none overflow-y-auto lg:overflow-hidden">
-
-  <header class="min-h-[3.5rem] py-2 border-b border-gray-800 bg-[#0B111E] px-4 flex flex-wrap items-center justify-between gap-2 shrink-0">
-    <div class="flex items-center gap-3">
-      <div class="relative flex items-center justify-center w-3 h-3">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-      </div>
-      <span class="font-bold tracking-tight text-base text-white">Vector <span class="text-emerald-400 font-mono text-xs uppercase px-1.5 py-0.5 bg-emerald-950/80 border border-emerald-800 rounded ml-1">v2.5 Tactical</span></span>
-    </div>
-
-    <div class="flex items-center gap-2.5 font-mono text-xs">
-      <div class="flex items-center gap-2 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
-        <span class="text-gray-400">Edge Failover:</span>
-        <button id="offline-toggle-btn" onclick="toggleOfflineMode()" class="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-800 text-gray-400 border border-gray-700 transition">
-          OFFLINE: OFF
-        </button>
-      </div>
-      <div class="hidden xl:flex items-center gap-2 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
-        <i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i>
-        <span class="text-gray-400">Throughput:</span>
-        <span id="metric-speed" class="text-sky-400 font-semibold">0.0 tok/s</span>
-      </div>
-      <div class="hidden sm:flex items-center gap-1.5 bg-gray-900/90 border border-gray-800 px-2.5 py-1 rounded-md">
-        <i data-lucide="globe" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span class="text-gray-400">Tavily:</span>
-        <span id="tavily-status-badge" class="text-amber-400 font-semibold">Live Grounded</span>
-      </div>
-    </div>
-  </header>
-
-  <main class="flex-1 grid grid-cols-12 gap-3 p-3 lg:overflow-hidden">
-
-    <section class="col-span-12 lg:col-span-3 bg-[#111827] border border-gray-800 rounded-lg flex flex-col lg:overflow-hidden">
-      
-      <div class="p-3 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">
-        <div class="flex items-center gap-2">
-          <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-200">Data Ingestion</h2>
-        </div>
-      </div>
-
-      <div class="p-3.5 flex-1 flex flex-col gap-3.5 lg:overflow-y-auto">
-        
-        <div>
-          <label class="text-[11px] font-mono uppercase text-gray-400 block mb-1.5">Multi-Scenario Test Suite</label>
-          <div class="grid grid-cols-3 gap-1 font-mono text-[10px]">
-            <button onclick="loadScenario('dasmarinas')" class="px-2 py-1 bg-gray-800 hover:bg-gray-700 border border-emerald-500/40 rounded text-emerald-300 truncate">Brush Fire</button>
-            <button onclick="loadScenario('substation')" class="px-2 py-1 bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded text-gray-300 truncate">Grid Arc</button>
-            <button onclick="loadScenario('flood')" class="px-2 py-1 bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded text-gray-300 truncate">Flood Surge</button>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="text-[11px] font-mono uppercase text-gray-400">Target Coordinates (LAT, LON)</label>
-            <span id="coord-location-tag" class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/60">Cavite Sector</span>
-          </div>
-          <div class="relative">
-            <input id="input-coords" type="text" value="14.3294, 120.9367" 
-              class="w-full bg-gray-950 border border-gray-700 focus:border-emerald-500 rounded-md px-3 py-2 text-xs font-mono text-white outline-none transition" />
-            <i data-lucide="crosshair" title="Detect GPS" class="w-3.5 h-3.5 text-gray-400 hover:text-emerald-400 absolute right-3 top-2.5 cursor-pointer transition"></i>
-          </div>
-        </div>
-
-        <div class="flex-1 flex flex-col min-h-[110px]">
-          <div class="flex justify-between items-center mb-1">
-            <label class="text-[11px] font-mono uppercase text-gray-400">Unstructured Field Report</label>
-            <span class="text-[10px] font-mono text-gray-500">NLP Parser Ready</span>
-          </div>
-          <textarea id="input-report" rows="4"
-            class="w-full flex-1 bg-gray-950 border border-gray-700 focus:border-emerald-500 rounded-md p-2.5 text-xs text-gray-200 leading-relaxed outline-none resize-none font-sans">Thick black smoke and a rapidly spreading brush fire spotted near the tree line. Winds are pushing it toward main roads.</textarea>
-        </div>
-
-        <button id="btn-transmit" onclick="runTriageSimulation()" 
-          class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-xs uppercase tracking-wider rounded-md shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition cursor-pointer">
-          <i data-lucide="zap" class="w-4 h-4"></i>
-          <span>Execute Multi-Agent Triage</span>
-        </button>
-
-        <div class="pt-2 border-t border-gray-800/80">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-[11px] font-mono uppercase text-gray-400">Live Environmental Telemetry</span>
-            <span class="text-[10px] font-mono text-sky-400">Tavily Grounded</span>
-          </div>
-          <div class="bg-gray-950/80 border border-gray-800/90 p-2.5 rounded-md">
-            <div id="env-rag-text" class="text-[11px] text-gray-300 leading-tight">Waiting for pipeline execution...</div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <section class="col-span-12 lg:col-span-5 bg-[#111827] border border-gray-800 rounded-lg flex flex-col overflow-hidden relative min-h-[420px] lg:min-h-0">
-      <div id="map" class="flex-1 w-full z-10 min-h-[360px]"></div>
-      <div class="min-h-[2.5rem] py-1.5 bg-gray-950 border-t border-gray-800 px-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-gray-400 shrink-0">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span>
-          <span>Epicenter Lock</span>
-        </div>
-        <div class="text-emerald-400">Click map to relocate incident zone</div>
-      </div>
-    </section>
-
-    <section class="col-span-12 lg:col-span-4 flex flex-col gap-3 lg:overflow-hidden">
-      <div class="h-64 lg:h-[44%] bg-[#0B0F17] border border-gray-800 rounded-lg flex flex-col overflow-hidden">
-        <div class="px-3.5 py-2.5 border-b border-gray-800 bg-gray-900/60 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
-            <span class="text-xs font-mono font-semibold text-amber-400 uppercase tracking-wider">Agentic Reasoning Terminal</span>
-          </div>
-          <button onclick="toggleJsonView()" id="btn-json-toggle" class="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
-            { } Raw JSON
-          </button>
-        </div>
-
-        <div id="terminal-steps" class="p-3 font-mono text-xs space-y-2 overflow-y-auto flex-1">
-          <div class="p-2 rounded bg-gray-900/70 border border-gray-800/80">
-            <div class="text-amber-300 font-medium">Pipeline Status</div>
-            <div id="terminal-status-text" class="text-[11px] text-gray-400">Awaiting execution signal...</div>
-          </div>
-        </div>
-        
-        <pre id="terminal-json" class="hidden p-3 font-mono text-[11px] text-sky-300 bg-gray-950 overflow-y-auto flex-1">{
-  "status": "READY"
-}</pre>
-      </div>
-
-      <div class="flex-1 bg-[#111827] border-2 border-red-500/80 rounded-lg flex flex-col overflow-hidden shadow-lg shadow-red-950/20">
-        <div class="p-3 bg-gradient-to-r from-red-950/90 via-red-900/40 to-gray-900 border-b border-red-500/40 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <span id="badge-severity" class="px-2 py-0.5 bg-red-600 text-white font-mono font-bold text-xs rounded uppercase tracking-wider animate-pulse">
-              SEV: - / 10
-            </span>
-            <h3 id="triage-title" class="font-bold text-sm text-white tracking-tight">Pending Triage</h3>
-          </div>
-          <span id="badge-confidence" class="text-[11px] font-mono text-red-300">Confidence: --%</span>
-        </div>
-
-        <div class="p-3.5 overflow-y-auto flex-1 space-y-3">
-          <p id="triage-summary" class="text-xs text-gray-300 leading-relaxed bg-gray-950/70 p-2.5 rounded border border-gray-800">
-            Execute pipeline to synthesize live environmental data and generate structured emergency response protocols.
-          </p>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[11px] font-mono uppercase font-semibold text-sky-400">Actionable Response Protocols</span>
-              <span class="text-[10px] font-mono text-gray-400">Human-in-the-Loop Review</span>
-            </div>
-
-            <div id="protocols-container" class="space-y-1.5 text-xs">
-              <div class="p-2 rounded bg-gray-900/90 border border-gray-800 text-gray-400 text-xs">
-                Pending triage execution...
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-2.5 bg-gray-950 border-t border-gray-800 flex items-center justify-between gap-2">
-          <div class="text-[11px] font-mono text-gray-400">
-            <span id="dispatch-status" class="text-emerald-400 font-semibold">Pending Review</span>
-          </div>
-          <button onclick="executeDispatch()" id="btn-dispatch" class="px-3.5 py-1.5 bg-sky-500 text-gray-950 font-mono font-bold text-xs rounded transition flex gap-1.5 opacity-50 cursor-not-allowed" disabled>
-            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-            <span>AUTHORIZE & DISPATCH</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
+<script>
     lucide.createIcons();
-
     let isOfflineMode = false;
     let activeIncidentId = null;
+    
+    const map = L.map('map').setView([14.3294, 120.9367], 14);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    let epicenterMarker = L.marker([14.3294, 120.9367]).addTo(map);
+    const incidentLayer = L.layerGroup().addTo(map);
 
     function toggleOfflineMode() {
       isOfflineMode = !isOfflineMode;
       const btn = document.getElementById('offline-toggle-btn');
-      const tavilyTag = document.getElementById('tavily-status-badge');
-      if (isOfflineMode) {
-        btn.className = "px-2 py-0.5 rounded text-[11px] font-bold bg-red-950 text-red-400 border border-red-700 transition";
-        btn.innerText = "OFFLINE: ON (EDGE FAILOVER)";
-        tavilyTag.innerText = "Bypassed (Edge Cache)";
-        tavilyTag.className = "text-red-400 font-semibold";
-      } else {
-        btn.className = "px-2 py-0.5 rounded text-[11px] font-bold bg-gray-800 text-gray-400 border border-gray-700 transition";
-        btn.innerText = "OFFLINE: OFF";
-        tavilyTag.innerText = "Live Grounded";
-        tavilyTag.className = "text-amber-400 font-semibold";
-      }
+      btn.className = isOfflineMode ? "px-2 py-0.5 rounded text-[11px] font-bold bg-red-950 text-red-400 border border-red-700" : "px-2 py-0.5 rounded text-[11px] font-bold bg-gray-800 text-gray-400 border border-gray-700";
+      btn.innerText = isOfflineMode ? "OFFLINE: ON" : "OFFLINE: OFF";
     }
-
-    const map = L.map('map', { zoomControl: true }).setView([14.3294, 120.9367], 14);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri - Source: Esri, USGS, NOAA'
-    }).addTo(map);
-
-    const pulseIcon = L.divIcon({ className: 'pulse-epicenter', iconSize: [18, 18], iconAnchor: [9, 9] });
-    let epicenterMarker = L.marker([14.3294, 120.9367], { icon: pulseIcon }).addTo(map);
-    let evacCircle = L.circle([14.3294, 120.9367], { color: '#EF4444', weight: 1.5, dashArray: '6, 6', fillColor: '#EF4444', fillOpacity: 0.12, radius: 650 }).addTo(map);
-
-    async function updateLocationLabel(lat, lng) {
-      const locTag = document.getElementById('coord-location-tag');
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
-        const data = await res.json();
-        if (data && data.address) {
-          const city = data.address.city || data.address.town || data.address.municipality || 'Active Sector';
-          const state = data.address.state || '';
-          locTag.innerText = `${city}${state ? ' / ' + state : ''}`;
-        }
-      } catch (e) {
-        locTag.innerText = `Live GPS Sector`;
-      }
-    }
-
-    function updateMapLocation(lat, lng) {
-      document.getElementById('input-coords').value = `${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}`;
-      map.flyTo([lat, lng], 14, { duration: 1.2 });
-      epicenterMarker.setLatLng([lat, lng]);
-      evacCircle.setLatLng([lat, lng]);
-    }
-
-    function detectUserLocation() {
-      if ("geolocation" in navigator) {
-        const locTag = document.getElementById('coord-location-tag');
-        locTag.innerText = "Acquiring GPS Lock...";
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLat = position.coords.latitude;
-            const userLng = position.coords.longitude;
-            updateMapLocation(userLat, userLng);
-            updateLocationLabel(userLat, userLng);
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 6000 }
-        );
-      }
-    }
-
-    map.on('click', function(e) {
-      updateMapLocation(e.latlng.lat, e.latlng.lng);
-      updateLocationLabel(e.latlng.lat, e.latlng.lng);
-    });
-
-    const crosshairIcon = document.querySelector('[data-lucide="crosshair"]');
-    if (crosshairIcon) crosshairIcon.addEventListener('click', detectUserLocation);
-    detectUserLocation();
 
     function loadScenario(type) {
       const inputs = {
@@ -302,8 +23,6 @@
       };
       document.getElementById('input-coords').value = inputs[type].loc;
       document.getElementById('input-report').value = inputs[type].text;
-      const coords = inputs[type].loc.split(',');
-      updateMapLocation(coords[0], coords[1]);
     }
 
     async function runTriageSimulation() {
@@ -311,7 +30,7 @@
       const rawCoords = document.getElementById('input-coords').value.split(',');
       const report = document.getElementById('input-report').value;
       
-      btn.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full"></span><span>Executing Pipeline...</span>`;
+      btn.innerHTML = `<span>Executing...</span>`;
       btn.classList.add('opacity-50');
 
       try {
@@ -321,34 +40,34 @@
           body: JSON.stringify({ report, lat: rawCoords[0], lng: rawCoords[1], offlineMode: isOfflineMode })
         });
         const jsonRes = await response.json();
-        
-        if (!jsonRes.success) throw new Error(jsonRes.error || "API returned failure");
+        if (!jsonRes.success) throw new Error(jsonRes.error || "API failure");
         
         const result = jsonRes.data;
         activeIncidentId = result.id;
 
         document.getElementById('badge-severity').innerText = `SEV: ${result.severity_score} / 10`;
-        document.getElementById('triage-title').innerText = result.incident_classification.replace(/_/g, ' ');
-        document.getElementById('badge-confidence').innerText = `Confidence: ${(result.confidence * 100).toFixed(1)}%`;
+        document.getElementById('triage-title').innerText = (result.incident_classification || "UNKNOWN").replace(/_/g, ' ');
+        document.getElementById('badge-confidence').innerText = `Conf: ${((result.confidence || 0) * 100).toFixed(1)}%`;
         document.getElementById('triage-summary').innerText = `Evaluated via ${result.engine || 'Vector Core'}. Mode: ${jsonRes.mode}`;
         
-        if (result.telemetry_fusion && result.telemetry_fusion.weather) {
-          document.getElementById('env-rag-text').innerText = result.telemetry_fusion.weather;
-        }
+        const isGrounded = result.telemetry_fusion && result.telemetry_fusion.grounded === true;
+        document.getElementById('tavily-status-badge').innerText = isGrounded ? "Live Search Context" : "No Grounding Data";
+        document.getElementById('tavily-status-badge').className = isGrounded ? "text-amber-400 font-semibold" : "text-gray-500 font-semibold";
+        document.getElementById('env-rag-text').innerText = result.telemetry_fusion?.weather || "No context available.";
 
-        if (result.metrics) {
+        if (result.metrics && result.metrics.eval_latency_ms > 0) {
           document.getElementById('metric-speed').innerText = `${result.metrics.throughput_tok_sec || 0} tok/s`;
-          document.getElementById('terminal-steps').innerHTML = `
-            <div class="text-sky-400 mb-1">Nano Parser Latency: ${result.metrics.parser_latency_ms || 0}ms</div>
-            <div class="text-amber-400">Ultra Evaluator Latency: ${result.metrics.eval_latency_ms || 0}ms</div>
-          `;
+          document.getElementById('terminal-steps').innerHTML = `<div class="text-amber-400">Ultra Evaluator: ${result.metrics.eval_latency_ms}ms</div>`;
+        } else {
+          document.getElementById('metric-speed').innerText = `Edge Routing`;
+          document.getElementById('terminal-steps').innerHTML = `<div class="text-red-400">Cloud bypassed. Local processing.</div>`;
         }
 
         const container = document.getElementById('protocols-container');
         container.innerHTML = '';
-        (result.action_plan || []).forEach(step => {
+        (result.action_plan || ["No plan generated."]).forEach(step => {
           const div = document.createElement('div');
-          div.className = "p-2 mb-1 rounded bg-gray-900/90 border border-gray-800 text-white";
+          div.className = "p-2 mb-1 rounded bg-gray-900 border border-gray-800 text-white";
           div.textContent = step;
           container.appendChild(div);
         });
@@ -358,15 +77,14 @@
         const dispatchBtn = document.getElementById('btn-dispatch');
         dispatchBtn.disabled = false;
         dispatchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        dispatchBtn.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i><span>AUTHORIZE & DISPATCH</span>`;
-        dispatchBtn.className = "px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-gray-950 font-mono font-bold text-xs rounded transition flex items-center gap-1.5";
+        dispatchBtn.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i><span>AUTHORIZE PLAN</span>`;
         document.getElementById('dispatch-status').innerText = "Staged for Review";
 
+        loadIncidentHistory();
       } catch (e) {
         alert("Pipeline error: " + e.message);
       }
-
-      btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Execute Multi-Agent Triage</span>`;
+      btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4"></i><span>Execute Pipeline</span>`;
       btn.classList.remove('opacity-50');
       lucide.createIcons();
     }
@@ -374,36 +92,67 @@
     function toggleJsonView() {
       const steps = document.getElementById('terminal-steps');
       const json = document.getElementById('terminal-json');
-      const btn = document.getElementById('btn-json-toggle');
-      if (json.classList.contains('hidden')) {
-        steps.classList.add('hidden');
-        json.classList.remove('hidden');
-        btn.innerText = "Agent Trace";
-      } else {
-        json.classList.add('hidden');
-        steps.classList.remove('hidden');
-        btn.innerText = "{ } Raw JSON";
-      }
+      if (json.classList.contains('hidden')) { steps.classList.add('hidden'); json.classList.remove('hidden'); } 
+      else { json.classList.add('hidden'); steps.classList.remove('hidden'); }
     }
 
-    async function executeDispatch() {
+    async function executeDispatch(action = 'approve') {
       if (!activeIncidentId) return;
       const btn = document.getElementById('btn-dispatch');
-      btn.innerHTML = `<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-gray-950 border-t-transparent rounded-full"></span><span>AUTHORIZING...</span>`;
-
       try {
-        const res = await fetch(`/api/incidents/${activeIncidentId}/approve`, { method: 'POST' });
+        const res = await fetch(`/api/incidents/${activeIncidentId}/${action}`, { method: 'POST', headers: { 'x-user-id': 'OIC-143' } });
         const data = await res.json();
         if (data.success) {
-          btn.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span>PROTOCOLS LOGGED</span>`;
-          btn.className = "px-3.5 py-1.5 bg-emerald-500 text-gray-950 font-mono font-bold text-xs rounded flex items-center gap-1.5";
-          document.getElementById('dispatch-status').innerText = "Units Dispatched (Audit Saved)";
-        }
-      } catch (e) {
-        alert("Failed to reach server.");
-      }
-      lucide.createIcons();
+          btn.innerHTML = action === 'approve' ? `<i data-lucide="shield-check" class="w-3.5 h-3.5"></i><span>PLAN LOGGED</span>` : `<i data-lucide="x-circle" class="w-3.5 h-3.5"></i><span>REJECTED</span>`;
+          btn.className = action === 'approve' ? "px-3.5 py-1.5 bg-emerald-500 text-gray-950 font-mono font-bold text-xs rounded flex gap-1.5" : "px-3.5 py-1.5 bg-red-600 text-white font-mono font-bold text-xs rounded flex gap-1.5";
+          document.getElementById('dispatch-status').innerText = `Audit Saved: ${action.toUpperCase()}`;
+          loadIncidentHistory();
+        } else alert("Error: " + data.error);
+      } catch (e) { alert("Failed to reach server."); }
     }
+
+    async function loadIncidentHistory() {
+      try {
+        const res = await fetch('/api/incidents');
+        const json = await res.json();
+        if(json.success && json.data) {
+          incidentLayer.clearLayers();
+          json.data.forEach(inc => {
+            let color = inc.severity >= 8 ? '#EF4444' : (inc.severity >= 6 ? '#F59E0B' : '#3B82F6');
+            if(inc.status === 'REJECTED') color = '#6B7280';
+            
+            let circle = L.circleMarker([inc.lat, inc.lng], { radius: 6, fillColor: color, color: color, weight: 1, opacity: 1, fillOpacity: 0.6 });
+            
+            const popupContent = document.createElement('div');
+            popupContent.className = 'text-xs';
+            const title = document.createElement('strong');
+            title.textContent = inc.classification;
+            popupContent.appendChild(title);
+            popupContent.appendChild(document.createElement('br'));
+            popupContent.appendChild(document.createTextNode(`Sev: ${inc.severity} | Status: ${inc.status}`));
+            
+            circle.bindPopup(popupContent);
+            incidentLayer.addLayer(circle);
+          });
+        }
+      } catch (e) { console.error("History sync failed"); }
+    }
+
+    setInterval(async () => {
+      const dot = document.getElementById('api-status-dot');
+      const text = document.getElementById('api-status-text');
+      try {
+        const res = await fetch('/api/health');
+        if (!res.ok) throw new Error();
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        text.className = "text-emerald-400 font-semibold tracking-wide";
+        text.innerText = "API ONLINE";
+      } catch (e) {
+        dot.className = "w-2 h-2 rounded-full bg-red-500";
+        text.className = "text-red-500 font-semibold tracking-wide";
+        text.innerText = "API DEGRADED";
+      }
+    }, 10000);
+    
+    loadIncidentHistory();
   </script>
-</body>
-</html>
